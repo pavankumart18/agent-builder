@@ -1,0 +1,35 @@
+﻿{
+  "problems": [
+    {
+      "title": "Regulatory Compliance Document Analyzer",
+      "tag": "Financial",
+      "summary": "Audit filings with extraction, validation, gap analysis, and risk scoring loops.",
+      "problem": "Build a regulatory compliance analyzer that ingests filings (10-K, 10-Q, prospectuses), extracts key sections, checks SEC/Basel/MiFID rules, runs gap + risk scoring loops, and outputs an audit-ready report."
+    },
+    {
+      "title": "Research Paper Quality Pipeline",
+      "tag": "Publishers",
+      "summary": "Validate citations, methodology, originality, and formatting before issuing verdicts.",
+      "problem": "Create a research paper pipeline that analyzes structure, validates citations, reviews methodology, improves clarity, checks plagiarism and journal standards, scores quality, and issues accept/revise/reject guidance."
+    },
+    {
+      "title": "Financial Earnings Intelligence",
+      "tag": "Financial",
+      "summary": "Parse transcripts + filings, cross-check metrics, and produce analyst-ready briefs.",
+      "problem": "Develop an earnings intelligence workflow that parses call transcripts and filings, extracts key metrics, analyzes sentiment, compares peers, flags anomalies, validates numbers, and drafts bull/bear theses plus alerts."
+    },
+    {
+      "title": "Multi-Channel Marketing Generator",
+      "tag": "Marketing",
+      "summary": "Turn briefs into messaging, assets, brand/legal checks, A/B tests, and predictions.",
+      "problem": "Design a marketing generator that transforms a brief into audience insights, messaging frameworks, multi-format assets, brand/legal validation loops, A/B test design, and performance estimates."
+    },
+    {
+      "title": "Intelligent Customer Support Orchestrator",
+      "tag": "Support",
+      "summary": "Classify tickets, search KB, draft responses, score confidence, and learn.",
+      "problem": "Build a support orchestrator that classifies tickets, pulls customer history, searches the KB, drafts personalized responses, scores confidence, escalates when necessary, validates tone/accuracy, and updates the KB with new resolutions."
+    }
+  ]
+}
+
