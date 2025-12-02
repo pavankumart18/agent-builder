@@ -103,6 +103,11 @@
       border-color: #0d6efd;
       background: rgba(13, 110, 253, 0.08);
     }
+    .dummy-data-card pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
 
     .data-dropzone {
       cursor: pointer;
@@ -134,7 +139,7 @@
   <main class="container-fluid">
     <h1 class="display-2 my-4 text-center">Multi-Agent Orchestrator</h1>
     <h2 class="h4 text-center text-body-secondary">Create a short chain of agents, run them sequentially, and summarize the result.</h2>
-    <p class="narrative mx-auto text-center text-body-secondary">Bring your own API credentials. The Architect returns 2-5 focused agents, each agent receives the previous output, and a short conclusion closes the loop.</p>
+    <p class="narrative mx-auto text-center text-body-secondary">Bring your own API credentials. The Architect returns 2-5 focused agents and each agent receives the previous output to keep the chain tight.</p>
 
     <section class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3 my-4" id="problem-cards"></section>
 

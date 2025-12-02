@@ -169,7 +169,6 @@ async function runAgents(cfg) {
 async function runAgentStage(cfg, plan, dataEntries) {
   const dataContext = formatDataEntries(dataEntries);
   let context = dataContext;
-  const transcript = [];
   for (let index = 0; index < plan.length; index += 1) {
     const agent = plan[index];
     const card = createAgentCard(agent.agentName || `Agent ${index + 1}`, agent.systemInstruction || "", `Step ${index + 1}`);
@@ -199,34 +198,12 @@ async function runAgentStage(cfg, plan, dataEntries) {
       },
     });
     context = output.trim() || context;
-    transcript.push({ name: agent.agentName || `Agent ${index + 1}`, text: context });
     const confidence = randomConfidence(validating ? 0.65 : 0.75);
     setFlowConfidence(node, confidence);
     if (validating && confidence < 0.8) showFlowLoop(node);
     finishFlowNode(node);
     deactivateCard(card, "Done");
   }
-
-  const summaryCard = createAgentCard("Conclusion", "Summarizes the chain", "Summary");
-  nodes.agentContainer.appendChild(summaryCard.wrapper);
-  activateCard(summaryCard, "Synthesizing");
-  const summaryNode = addFlowNode("Final Deliverable");
-  let finalText = "";
-  await streamOpenAI({
-    ...cfg,
-    messages: [
-      { role: "system", content: "Summarize in <=120 words and include 2 follow-up recommendations." },
-      { role: "user", content: buildSummaryPrompt(cfg.problem, transcript, dataEntries) },
-    ],
-    onChunk: (txt) => {
-      finalText += txt;
-      summaryCard.output.textContent = finalText;
-      bumpProgress(summaryNode, 10);
-    },
-  });
-  setFlowConfidence(summaryNode, randomConfidence());
-  finishFlowNode(summaryNode);
-  deactivateCard(summaryCard, "Done");
 }
 
 function finishRunState() {
@@ -621,11 +598,6 @@ function formatBytes(bytes) {
 
 function uniqueId(prefix) {
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-}
-
-function buildSummaryPrompt(problem, steps, dataEntries) {
-  const lines = steps.map((step, idx) => `${idx + 1}. ${step.name}: ${truncate(step.text, 200)}`).join("\n");
-  return `Problem:\n${problem}\n\nInput Data:\n${formatDataEntries(dataEntries)}\n\nAgent Outputs:\n${lines}`;
 }
 
 function persistFields(ids) {
