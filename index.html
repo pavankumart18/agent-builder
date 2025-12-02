@@ -83,6 +83,43 @@
       border-color: #ef4444;
       background: rgba(239, 68, 68, 0.12);
     }
+
+    .data-section-highlight {
+      box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.4);
+      border-radius: 0.75rem;
+    }
+
+    .dummy-data-card {
+      border: 2px dashed #d0d5dd;
+      border-radius: 0.75rem;
+      padding: 0.75rem;
+      background: var(--bs-body-bg);
+      height: 100%;
+      cursor: pointer;
+      transition: border-color 0.2s ease, background 0.2s ease;
+    }
+
+    .dummy-data-card.active {
+      border-color: #0d6efd;
+      background: rgba(13, 110, 253, 0.08);
+    }
+
+    .data-dropzone {
+      cursor: pointer;
+      min-height: 120px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      justify-content: center;
+      align-items: flex-start;
+      background: rgba(108, 117, 125, 0.08);
+      border: 2px dashed #cbd5f5;
+    }
+
+    .data-dropzone.dragover {
+      border-color: #0d6efd;
+      background: rgba(13, 110, 253, 0.12);
+    }
   </style>
 </head>
 
@@ -140,7 +177,7 @@
             <textarea id="problem" rows="3" class="form-control" placeholder="e.g., Draft a 4-week SQL upskilling plan." required></textarea>
           </div>
           <div class="d-flex flex-wrap gap-3 mt-4">
-            <button type="submit" class="btn btn-dark">Run Agents</button>
+            <button type="submit" class="btn btn-primary shadow-sm">Run Agents</button>
             <button type="button" id="clear-log" class="btn btn-outline-secondary">Clear Output</button>
             <p id="error-banner" class="text-danger small mb-0 d-none"></p>
           </div>
@@ -151,6 +188,37 @@
     <section class="row row-cols-1 g-3" id="agent-container">
       <div class="text-center text-body-secondary small border border-dashed border-secondary rounded-3 py-4 bg-body">
         Agents will appear here after you run a problem.
+      </div>
+    </section>
+
+    <section class="card my-4 d-none" id="data-input-section">
+      <div class="card-header d-flex flex-wrap gap-3 justify-content-between align-items-center">
+        <div class="d-flex flex-column">
+          <span class="fw-semibold">Data Inputs</span>
+          <span class="text-body-secondary small" id="data-input-status">Run the architect to generate suggested data.</span>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm d-none" id="inline-run-button">Start Agents</button>
+      </div>
+      <div class="card-body">
+        <div id="dummy-data-grid" class="row row-cols-1 row-cols-md-3 g-2 mb-4 visually-hidden"></div>
+        <div class="row g-3">
+          <div class="col-12 col-lg-6">
+            <label class="form-label small text-body-secondary">Upload files</label>
+            <div id="data-dropzone" class="data-dropzone rounded-3 p-3">
+              <div>
+                <strong>Drop CSV / JSON / TXT files</strong> or
+                <button type="button" class="btn btn-link btn-sm p-0 align-baseline" data-file-trigger>browse files</button>
+              </div>
+              <p class="mb-0 small text-body-secondary">Files stay local - only their text content is streamed to the agents.</p>
+            </div>
+            <input id="data-file-input" type="file" class="d-none" multiple accept=".csv,.txt,.json" />
+            <ul id="uploaded-data-list" class="list-group list-group-flush mt-2 small d-none"></ul>
+          </div>
+          <div class="col-12 col-lg-6">
+            <label class="form-label small text-body-secondary" for="data-notes">Inline data or notes</label>
+            <textarea id="data-notes" rows="6" class="form-control" placeholder="Paste quick metrics, KPIs, transcripts..."></textarea>
+          </div>
+        </div>
       </div>
     </section>
 
