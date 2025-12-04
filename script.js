@@ -59,6 +59,9 @@ const state = {
   customProblem: null,
 };
 
+let lastScrollKey = null;
+let scrollScheduled = false;
+
 initializeSettings(config.defaults || {});
 renderDemoCards();
 renderApp();
@@ -111,6 +114,7 @@ function renderApp() {
       `,
       container,
     );
+    scheduleScrollToRunningSection();
     return;
   }
   const demo = getSelectedDemo();
@@ -131,6 +135,7 @@ function renderApp() {
     `,
     container,
   );
+  scheduleScrollToRunningSection();
 }
 
 function renderStageBadges() {
@@ -154,7 +159,7 @@ function renderPlan() {
   const streaming = state.stage === "architect";
   const hasPlan = state.plan.length > 0;
   return html`
-    <section class="card mb-4">
+    <section class="card mb-4" data-running-key=${streaming ? "architect-plan" : null}>
       <div class="card-header d-flex justify-content-between align-items-center">
         <span><i class="bi bi-diagram-3 me-2"></i> Architect Plan</span>
         <span class="badge text-bg-${streaming ? "primary" : hasPlan ? "success" : "secondary"}">
@@ -297,7 +302,7 @@ function renderAgentOutputs() {
   return html`
     <section class="mb-5">
       ${state.agentOutputs.map((agent, index) => html`
-        <div class="card mb-3 shadow-sm">
+        <div class="card mb-3 shadow-sm" data-running-key=${`agent-${index}`}>
           <div class="card-body row g-3 align-items-stretch">
             <div class="col-md-4 d-flex flex-column">
               <p class="text-uppercase small text-body-secondary mb-1">Step ${index + 1}</p>
@@ -693,4 +698,31 @@ function syncCustomProblemControls() {
   const busy = state.stage === "architect" || state.stage === "run";
   customProblemButton.disabled = busy;
   customProblemButton.textContent = busy ? "Streaming..." : "Plan & Run Custom";
+}
+
+function scheduleScrollToRunningSection() {
+  if (scrollScheduled) return;
+  scrollScheduled = true;
+  requestAnimationFrame(() => {
+    scrollScheduled = false;
+    const key = getRunningScrollKey();
+    if (!key) {
+      lastScrollKey = null;
+      return;
+    }
+    if (key === lastScrollKey) return;
+    const target = document.querySelector(`[data-running-key="${key}"]`);
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      lastScrollKey = key;
+    }
+  });
+}
+
+function getRunningScrollKey() {
+  if (state.stage === "architect") return "architect-plan";
+  if (state.stage === "run" && typeof state.runningAgentIndex === "number") {
+    return `agent-${state.runningAgentIndex}`;
+  }
+  return null;
 }
