@@ -59,7 +59,7 @@ const state = {
   customProblem: null,
 };
 
-let lastScrollKey = null;
+const scrollState = { key: null, height: 0 };
 let scrollScheduled = false;
 
 initializeSettings(config.defaults || {});
@@ -196,8 +196,9 @@ function renderPlan() {
 
 function renderDataInputs() {
   const disabled = !state.plan.length || state.stage === "architect" || state.stage === "run";
+  const highlightKey = state.stage === "data" ? "data-inputs" : null;
   return html`
-    <section class="card mb-4">
+    <section class="card mb-4" data-running-key=${highlightKey}>
       <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
         <div><i class="bi bi-database me-2"></i> Data Inputs</div>
         <button class="btn btn-sm btn-primary" @click=${startAgents} ?disabled=${disabled}>
@@ -330,7 +331,7 @@ function renderAgentOutputBody(agent) {
     return html`<div class="text-center py-3">${loading}</div>`;
   }
   if (agent.status === "done") {
-    return unsafeHTML(marked.parse(agent.text));
+    return html`<div class="agent-markdown">${unsafeHTML(marked.parse(agent.text))}</div>`;
   }
   const tone = agent.status === "error" ? "text-warning" : "text-white";
   return html`<pre class="mb-0 ${tone}" style="white-space: pre-wrap;">${agent.text}</pre>`;
@@ -707,22 +708,51 @@ function scheduleScrollToRunningSection() {
     scrollScheduled = false;
     const key = getRunningScrollKey();
     if (!key) {
-      lastScrollKey = null;
+      resetScrollTracking();
       return;
     }
-    if (key === lastScrollKey) return;
     const target = document.querySelector(`[data-running-key="${key}"]`);
-    if (target) {
-      target.scrollIntoView({ behavior: "smooth", block: "center" });
-      lastScrollKey = key;
+    if (!target) return;
+    const height = target.scrollHeight;
+    const sameKey = scrollState.key === key;
+    const heightChanged = sameKey && Math.abs(height - scrollState.height) > 32;
+    const shouldFollow = state.stage === "architect" || state.stage === "run";
+    const needsScroll = !sameKey || !isElementMostlyVisible(target) || (shouldFollow && heightChanged);
+    if (needsScroll) {
+      scrollElementIntoView(target);
     }
+    scrollState.key = key;
+    scrollState.height = height;
   });
 }
 
 function getRunningScrollKey() {
   if (state.stage === "architect") return "architect-plan";
+  if (state.stage === "data") return "data-inputs";
   if (state.stage === "run" && typeof state.runningAgentIndex === "number") {
     return `agent-${state.runningAgentIndex}`;
   }
+  if (state.agentOutputs.length) {
+    return `agent-${state.agentOutputs.length - 1}`;
+  }
   return null;
+}
+
+function resetScrollTracking() {
+  scrollState.key = null;
+  scrollState.height = 0;
+}
+
+function isElementMostlyVisible(element) {
+  const rect = element.getBoundingClientRect();
+  const viewHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+  const buffer = Math.min(120, viewHeight * 0.15);
+  return rect.bottom > buffer && rect.top < viewHeight - buffer;
+}
+
+function scrollElementIntoView(element) {
+  const rect = element.getBoundingClientRect();
+  const viewHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+  const block = rect.top < 0 || rect.top < viewHeight * 0.25 ? "start" : "center";
+  element.scrollIntoView({ behavior: "smooth", block });
 }
