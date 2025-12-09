@@ -88,7 +88,7 @@ const DEFAULT_OPTIONS = {
   orientation: "horizontal",
   animate: false,
   columnCount: 2,
-  onNodeSelected: () => {},
+  onNodeSelected: () => { },
 };
 
 export function createFlowchart(containerOrSelector, elements = [], options = {}) {
@@ -171,14 +171,37 @@ export function createFlowchart(containerOrSelector, elements = [], options = {}
       controller.runLayout();
     },
     runLayout() {
-      const layout = cy.layout(createLayoutOptions(controller.orientation, controller.columnCount));
+      const layoutOpts = createLayoutOptions(controller.orientation, controller.columnCount);
+      // Disable internal layout animation to ensure we can calculate bounds immediately and resize container
+      layoutOpts.animate = false;
+
+      const layout = cy.layout(layoutOpts);
+      layout.one("layoutstop", () => {
+        const elements = cy.elements();
+        if (elements.length === 0) return;
+
+        // Calculate bounds with labels
+        const bb = elements.boundingBox({ includeLabels: true, includeOverlays: true });
+
+        // Determine optimal height
+        const PADDING_Y = 80;
+        const MIN_HEIGHT = 300;
+        const desiredHeight = bb.h + PADDING_Y;
+        const newHeight = Math.max(MIN_HEIGHT, desiredHeight);
+
+        // Apply height if it changed significantly
+        if (Math.abs(container.offsetHeight - newHeight) > 5) {
+          container.style.height = `${newHeight}px`;
+          cy.resize();
+        }
+        controller.fit();
+      });
       layout.run();
-      controller.fit();
     },
     fit() {
       if (!cy.elements().length) return;
-      cy.fit(cy.elements(), 48);
-      if (cy.zoom() < 0.4) cy.zoom(0.4);
+      cy.fit(cy.elements(), 30); // 30px padding around fit
+      if (cy.zoom() > 1.2) cy.zoom(1.2); // Don't zoom in too much if few nodes
       cy.center(cy.elements());
     },
     setNodeState(nextState = {}) {

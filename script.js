@@ -193,9 +193,13 @@ function renderPlan() {
       </div>
       <div class="card-body">
         ${streaming
-          ? html`<pre class="bg-dark text-white rounded-3 p-3 mb-0" style="white-space: pre-wrap;">${state.architectBuffer || "Streaming architect plan..."}</pre>`
-          : hasPlan
-            ? html`
+      ? html`<div class="bg-dark text-white rounded-3 p-3 mb-0">
+              ${state.architectBuffer
+          ? html`<pre class="mb-0 text-white" style="white-space: pre-wrap; overflow-wrap: break-word;">${state.architectBuffer}</pre>`
+          : html`<div class="d-flex align-items-center gap-2"><div class="spinner-border spinner-border-sm" role="status"></div><span>Streaming architect plan...</span></div>`}
+            </div>`
+      : hasPlan
+        ? html`
             <ol class="list-group list-group-numbered">
               ${state.plan.map((agent) => html`
                 <li class="list-group-item">
@@ -207,13 +211,13 @@ function renderPlan() {
                     <span class="badge text-bg-light text-uppercase">${agent.systemInstruction ? "Instruction" : ""}</span>
                   </div>
                   ${agent.systemInstruction
-                    ? html`<p class="small mb-0 mt-2 text-body-secondary">${agent.systemInstruction}</p>`
-                    : null}
+            ? html`<p class="small mb-0 mt-2 text-body-secondary">${agent.systemInstruction}</p>`
+            : null}
                 </li>
               `)}
             </ol>
           `
-            : html`<div class="text-center py-3 text-body-secondary small">Plan will appear here after the architect stream completes.</div>`}
+        : html`<div class="text-center py-3 text-body-secondary small">Plan will appear here after the architect stream completes.</div>`}
       </div>
     </section>
   `;
@@ -234,12 +238,12 @@ function renderDataInputs() {
         <div class="row g-3">
           <div class="col-lg-7">
             ${state.suggestedInputs.length
-              ? html`
+      ? html`
                 <div class="list-group">
                   ${state.suggestedInputs.map((input) => {
-                    const selected = state.selectedInputs.has(input.id);
-                    const mutedTextClass = selected ? "text-white" : "text-body-secondary";
-                    return html`
+        const selected = state.selectedInputs.has(input.id);
+        const mutedTextClass = selected ? "text-white" : "text-body-secondary";
+        return html`
                       <button type="button" class="list-group-item list-group-item-action d-flex flex-column gap-1 ${selected ? "active text-white" : ""}" @click=${() => toggleSuggestedInput(input.id)}>
                         <div class="d-flex justify-content-between align-items-center w-100">
                           <span class="fw-semibold ${selected ? "text-white" : ""}">${input.title}</span>
@@ -248,17 +252,17 @@ function renderDataInputs() {
                         <pre class="mb-0 small ${mutedTextClass}" style="white-space: pre-wrap; word-break: break-word;">${truncate(input.content, 420)}</pre>
                       </button>
                     `;
-                  })}
+      })}
                 </div>
               `
-              : html`<p class="text-body-secondary small">Architect suggestions will appear here.</p>`}
+      : html`<p class="text-body-secondary small">Architect suggestions will appear here.</p>`}
           </div>
           <div class="col-lg-5">
             <div class="mb-3">
               <label class="form-label small fw-semibold" for="data-upload">Upload CSV/JSON/TXT</label>
               <input id="data-upload" class="form-control" type="file" multiple accept=".txt,.csv,.json" @change=${handleFileUpload} />
               ${state.uploads.length
-                ? html`
+      ? html`
                   <ul class="list-group list-group-flush mt-2 small">
                     ${state.uploads.map((upload) => html`
                       <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -271,7 +275,7 @@ function renderDataInputs() {
                     `)}
                   </ul>
                 `
-                : html`<p class="small text-body-secondary mt-2 mb-0">Attached files stay in the browser.</p>`}
+      : html`<p class="small text-body-secondary mt-2 mb-0">Attached files stay in the browser.</p>`}
             </div>
             <div>
               <label class="form-label small fw-semibold" for="data-notes">Inline notes</label>
@@ -352,8 +356,8 @@ function renderFlowOutputPanel() {
       </div>
       <div class="${streamClass} flex-grow-1 overflow-auto">
         ${agentOutput
-          ? renderAgentOutputBody(agentOutput)
-          : html`<div class="text-body-secondary small">${emptyMessage}</div>`}
+      ? renderAgentOutputBody(agentOutput)
+      : html`<div class="text-body-secondary small">${emptyMessage}</div>`}
       </div>
       <p class="text-body-secondary small mt-3 mb-0">${footer}</p>
     </div>
@@ -362,31 +366,62 @@ function renderFlowOutputPanel() {
 
 function renderAgentOutputs() {
   if (!state.agentOutputs.length) return null;
+
+  const groups = new Map();
+  state.agentOutputs.forEach(agent => {
+    // Use helper to guess phase if missing or use direct prop
+    const p = agent.phase ?? "unknown";
+    if (!groups.has(p)) groups.set(p, []);
+    groups.get(p).push(agent);
+  });
+
+  // Maintain order based on appearance in agentOutputs
+  const orderedKeys = [];
+  const seenKeys = new Set();
+  state.agentOutputs.forEach(agent => {
+    const p = agent.phase ?? "unknown";
+    if (!seenKeys.has(p)) {
+      seenKeys.add(p);
+      orderedKeys.push(p);
+    }
+  });
+
   return html`
     <section class="mb-5">
-      ${state.agentOutputs.map((agent, index) => {
-        const stepLabel = getNodeStepLabel(agent.nodeId) || `Run ${index + 1}`;
-        return html`
-        <div class="card mb-3 shadow-sm" data-running-key=${`node-${agent.nodeId || index}`}>
-          <div class="card-body row g-3 align-items-stretch">
-            <div class="col-md-4 d-flex flex-column">
-              <p class="text-uppercase small text-body-secondary mb-1">${stepLabel}</p>
-              <h6 class="mb-2">${agent.name}</h6>
-              <p class="text-body-secondary small flex-grow-1 mb-3">${agent.task || agent.instruction || "Specialist executing next action."}</p>
-              ${(() => {
-                const meta = statusMeta(agent.status);
-                return html`<span class="badge text-bg-${meta.color} align-self-start">${meta.label}</span>`;
-              })()}
-            </div>
-            <div class="col-md-8">
-              <div class="${agentStreamClasses(agent)}">
-                ${renderAgentOutputBody(agent)}
+      ${orderedKeys.map(key => {
+    const group = groups.get(key);
+    const isParallel = group.length > 1;
+
+    if (isParallel) {
+      return html`
+              <div class="card mb-4 shadow-sm">
+                  <div class="card-header d-flex justify-content-between align-items-center">
+                      <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-secondary">Stage ${key}</span>
+                        <span class="fw-semibold">Parallel Execution</span>
+                      </div>
+                  </div>
+                  <div class="card-body bg-body-tertiary">
+                      <div class="row g-3">
+                        ${group.map(agent => html`
+                            <div class="col-lg-6 col-xl-${Math.max(Math.floor(12 / group.length), 4)}">
+                                ${renderAgentCardContent(agent, true)}
+                            </div>
+                        `)}
+                      </div>
+                  </div>
               </div>
-            </div>
-          </div>
-        </div>
-      `;
-      })}
+            `;
+    } else {
+      return html`
+              <div class="card mb-3 shadow-sm" data-running-key=${`node-${group[0].nodeId}`}>
+                <div class="card-body row g-3 align-items-stretch">
+                  ${renderAgentCardContent(group[0], false)}
+                </div>
+              </div>
+            `;
+    }
+  })}
     </section>
   `;
 }
@@ -402,6 +437,47 @@ function renderAgentOutputBody(agent) {
   return html`<pre class="mb-0 ${tone}" style="white-space: pre-wrap;">${agent.text}</pre>`;
 }
 
+function renderAgentCardContent(agent, simplified) {
+  const stepLabel = getNodeStepLabel(agent.nodeId) || agent.name;
+
+  if (simplified) {
+    return html`
+          <div class="h-100 d-flex flex-column border rounded-3 overflow-hidden shadow-sm">
+              <div class="p-3 bg-body-tertiary border-bottom d-flex justify-content-between align-items-center gap-2">
+                   <div class="text-truncate">
+                      <h6 class="mb-0 text-truncate" title="${agent.name}">${agent.name}</h6>
+                      <small class="text-body-secondary text-truncate d-block" title="${agent.task}">${agent.task}</small>
+                   </div>
+                   ${(() => {
+        const meta = statusMeta(agent.status);
+        return html`<span class="badge text-bg-${meta.color}">${meta.label}</span>`;
+      })()}
+              </div>
+              <div class="${agentStreamClasses(agent)} flex-grow-1 border-0 rounded-0" style="min-height: 200px;">
+                   ${renderAgentOutputBody(agent)}
+              </div>
+          </div>
+      `;
+  }
+
+  return html`
+      <div class="col-md-4 d-flex flex-column">
+        <p class="text-uppercase small text-body-secondary mb-1">${stepLabel}</p>
+        <h6 class="mb-2">${agent.name}</h6>
+        <p class="text-body-secondary small flex-grow-1 mb-3">${agent.task || agent.instruction || "Specialist executing next action."}</p>
+        ${(() => {
+      const meta = statusMeta(agent.status);
+      return html`<span class="badge text-bg-${meta.color} align-self-start">${meta.label}</span>`;
+    })()}
+      </div>
+      <div class="col-md-8">
+        <div class="${agentStreamClasses(agent)}">
+          ${renderAgentOutputBody(agent)}
+        </div>
+      </div>
+  `;
+}
+
 function statusMeta(status) {
   if (status === "done") return { label: "Done", color: "success" };
   if (status === "error") return { label: "Error", color: "danger" };
@@ -409,9 +485,9 @@ function statusMeta(status) {
 }
 
 function agentStreamClasses(agent) {
-  if (agent.status === "error") return "agent-stream border rounded-3 p-3 bg-dark text-warning";
-  if (agent.status === "done") return "agent-stream border rounded-3 p-3 bg-body";
-  return "agent-stream border rounded-3 p-3 bg-black text-white";
+  if (agent.status === "error") return "agent-stream border rounded-3 p-2 bg-dark text-warning";
+  if (agent.status === "done") return "agent-stream border rounded-3 p-2 bg-body";
+  return "agent-stream border rounded-3 p-2 bg-black text-white";
 }
 
 async function planDemo(index) {
@@ -568,59 +644,92 @@ async function startAgents() {
       latestNodeId: null,
     });
     let context = inputBlob;
-    for (let index = 0; index < state.plan.length; index += 1) {
-      const agent = state.plan[index];
-      const nodeId = agent?.nodeId || `agent-${index + 1}`;
-      const agentId = uniqueId("agent");
-      const runningNodes = new Set(state.runningNodeIds);
-      runningNodes.add(nodeId);
+
+    // Group plan by phases (stages)
+    const phases = new Map();
+    state.plan.forEach(agent => {
+      const phase = agent.phase ?? "default";
+      if (!phases.has(phase)) phases.set(phase, []);
+      phases.get(phase).push(agent);
+    });
+
+    const sortedPhaseKeys = Array.from(phases.keys()).sort((a, b) => {
+      if (typeof a === 'number' && typeof b === 'number') return a - b;
+      return String(a).localeCompare(String(b));
+    });
+
+    for (const phaseKey of sortedPhaseKeys) {
+      const agentsInPhase = phases.get(phaseKey);
+
+      // Initialize outputs for this phase
+      const newOutputs = agentsInPhase.map(agent => ({
+        id: uniqueId("agent"),
+        nodeId: agent.nodeId || uniqueId("node"),
+        phase: phaseKey,
+        name: agent.agentName,
+        task: agent.initialTask,
+        instruction: agent.systemInstruction,
+        text: "",
+        status: "running"
+      }));
+
       setState({
-        agentOutputs: [
-          ...state.agentOutputs,
-          {
-            id: agentId,
-            nodeId,
-            name: agent.agentName,
-            task: agent.initialTask,
-            instruction: agent.systemInstruction,
-            text: "",
-            status: "running",
-          },
-        ],
-        runningNodeIds: runningNodes,
-        latestNodeId: nodeId,
+        agentOutputs: [...state.agentOutputs, ...newOutputs]
       });
-      let buffer = "";
-      try {
-        await streamChatCompletion({
-          llm,
-          body: {
-            model,
-            stream: true,
-            messages: [
-              { role: "system", content: `${agent.systemInstruction}\n${agentStyle}`.trim() },
-              {
-                role: "user",
-                content: `Problem:\n${demo.problem}\n\nTask:\n${agent.initialTask}\n\nInput Data:\n${inputBlob}\n\nPrevious Output:\n${truncate(context, 800)}`,
+
+      const runningIds = new Set(state.runningNodeIds);
+      newOutputs.forEach(o => runningIds.add(o.nodeId));
+      setState({ runningNodeIds: runningIds });
+
+      // Parallel execution for agents in the same phase
+      const currentContext = context;
+      const formattingInstruction = "Output nicely formatted Markdown. Use headings, tables, or lists where appropriate. If returning code or JSON, use code blocks.";
+
+      const promises = newOutputs.map(outputItem => {
+        const agent = agentsInPhase.find(a => (a.nodeId === outputItem.nodeId));
+
+        return (async () => {
+          let buffer = "";
+          try {
+            await streamChatCompletion({
+              llm,
+              body: {
+                model,
+                stream: true,
+                messages: [
+                  { role: "system", content: `${agent.systemInstruction}\n${agentStyle}\n${formattingInstruction}`.trim() },
+                  {
+                    role: "user",
+                    content: `Problem:\n${demo.problem}\n\nTask:\n${agent.initialTask}\n\nInput Data:\n${inputBlob}\n\nPrevious Output from prior stages:\n${truncate(currentContext, 2000)}`,
+                  },
+                ],
               },
-            ],
-          },
-          onChunk: (text) => {
-            buffer += text;
-            updateAgentOutput(agentId, buffer, "running");
-          },
-        });
-        updateAgentOutput(agentId, buffer, "done");
-        context = buffer.trim() || context;
-      } catch (error) {
-        updateAgentOutput(agentId, buffer, "error");
-        throw error;
-      } finally {
-        const nextRunning = new Set(state.runningNodeIds);
-        nextRunning.delete(nodeId);
-        setState({ runningNodeIds: nextRunning });
-      }
+              onChunk: (text) => {
+                buffer += text;
+                updateAgentOutput(outputItem.id, buffer, "running");
+              }
+            });
+            updateAgentOutput(outputItem.id, buffer, "done");
+            return buffer;
+          } catch (error) {
+            updateAgentOutput(outputItem.id, buffer, "error");
+            console.error(`Error in agent ${agent.agentName}:`, error);
+            return `[Error] ${error.message}`;
+          } finally {
+            const currentRunning = new Set(state.runningNodeIds);
+            currentRunning.delete(outputItem.nodeId);
+            setState({ runningNodeIds: currentRunning });
+          }
+        })();
+      });
+
+      const results = await Promise.all(promises);
+
+      // Collect outputs for the next stage
+      const phaseContext = results.map((res, idx) => `Output from ${newOutputs[idx].name}:\n${res}`).join("\n\n");
+      context += `\n\n--- Stage ${phaseKey} completed ---\n${phaseContext}`;
     }
+
     setState({ stage: "idle", focusedNodeId: null, runningNodeIds: new Set() });
   } catch (error) {
     setState({
@@ -912,7 +1021,7 @@ function formatDataEntries(entries) {
   return entries.map((entry, idx) => `${idx + 1}. ${entry.title} [${entry.type}]\n${truncate(entry.content, 600)}`).join("\n\n");
 }
 
-async function streamChatCompletion({ llm, body, onChunk = () => {} }) {
+async function streamChatCompletion({ llm, body, onChunk = () => { } }) {
   const response = await fetch(`${llm.baseUrl}/chat/completions`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${llm.apiKey}` },

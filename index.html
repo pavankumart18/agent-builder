@@ -5,10 +5,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Agent Builder</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTUiIGZpbGw9IiMyNTYzZWIiLz48cGF0aCBmaWxsPSIjZmZmIiBkPSJtMTYgNyAyIDcgNyAyLTcgMi0yIDctMi03LTctMiA3LTJaIi8+PC9zdmc+" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" crossorigin="anonymous" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" crossorigin="anonymous" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/styles/github-dark.min.css" crossorigin="anonymous" />
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTUiIGZpbGw9IiMyNTYzZWIiLz48cGF0aCBmaWxsPSIjZmZmIiBkPSJtMTYgNyAyIDcgNyAyLTcgMi0yIDctMi03LTctMiA3LTJaIi8+PC9zdmc+" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+    crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/styles/github-dark.min.css"
+    crossorigin="anonymous" />
   <style>
     .narrative {
       max-width: 720px;
@@ -19,11 +23,13 @@
     }
 
     .flowchart-canvas {
-      min-height: 500px;
+      min-height: 300px;
       width: 100%;
       position: relative;
       overflow: hidden;
       background: var(--bs-body-bg);
+      transition: height 0.3s ease;
+      /* Smooth height transition */
     }
 
     .agent-stream {
@@ -34,7 +40,58 @@
     }
 
     .agent-markdown {
-      overflow-x: auto;
+      /* Removed overflow-x: auto to prevent scrollbars */
+      white-space: normal;
+    }
+
+    /* Force code blocks to wrap text */
+    .agent-markdown pre,
+    .agent-markdown code {
+      white-space: pre-wrap !important;
+      overflow-wrap: break-word !important;
+      word-break: break-all !important;
+      /* Aggressively break long JSON/strings */
+      overflow-x: visible !important;
+    }
+
+    .agent-markdown table {
+      width: 100%;
+      margin-bottom: 1rem;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      /* Allow tables to break words if necessary */
+      word-break: break-word;
+    }
+
+    .agent-markdown th,
+    .agent-markdown td {
+      padding: 0.5rem;
+      border: 1px solid var(--bs-border-color);
+    }
+
+    .agent-markdown th {
+      background-color: var(--bs-tertiary-bg);
+      font-weight: 600;
+    }
+
+    .agent-markdown h1,
+    .agent-markdown h2,
+    .agent-markdown h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-top: 1rem;
+      margin-bottom: 0.5rem;
+      color: var(--bs-heading-color);
+    }
+
+    .agent-markdown p {
+      margin-bottom: 0.5rem;
+    }
+
+    .agent-markdown ul,
+    .agent-markdown ol {
+      margin-bottom: 0.5rem;
+      padding-left: 1.5rem;
     }
   </style>
 </head>
@@ -43,7 +100,8 @@
   <nav class="navbar navbar-expand-lg bg-body-tertiary" data-bs-theme="dark">
     <div class="container-fluid">
       <a class="navbar-brand" href=".">Agent Builder</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
@@ -54,13 +112,17 @@
             </button>
           </div>
           <div class="nav-item dropdown" role="group" aria-label="Toggle dark mode" title="Toggle theme">
-            <button class="dark-theme-toggle btn btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <button class="dark-theme-toggle btn btn-outline-light dropdown-toggle" type="button"
+              data-bs-toggle="dropdown" aria-expanded="false">
               <i class="bi bi-circle-half"></i> <span class="d-lg-none ms-2">Toggle theme</span>
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
-              <li><button class="dropdown-item" data-bs-theme-value="light"><i class="me-2 bi bi-sun-fill"></i> Light</button></li>
-              <li><button class="dropdown-item" data-bs-theme-value="dark"><i class="me-2 bi bi-moon-stars-fill"></i> Dark</button></li>
-              <li><button class="dropdown-item" data-bs-theme-value="auto"><i class="me-2 bi bi-circle-half"></i> Auto</button></li>
+              <li><button class="dropdown-item" data-bs-theme-value="light"><i class="me-2 bi bi-sun-fill"></i>
+                  Light</button></li>
+              <li><button class="dropdown-item" data-bs-theme-value="dark"><i class="me-2 bi bi-moon-stars-fill"></i>
+                  Dark</button></li>
+              <li><button class="dropdown-item" data-bs-theme-value="auto"><i class="me-2 bi bi-circle-half"></i>
+                  Auto</button></li>
             </ul>
           </div>
         </div>
@@ -70,7 +132,8 @@
 
   <header class="container mt-4">
     <h1 class="display-1 my-3 text-center">Agent Builder</h1>
-    <h2 class="h4 text-center text-body-secondary">Architect-planned, specialist-executed chains with live streaming output.</h2>
+    <h2 class="h4 text-center text-body-secondary">Architect-planned, specialist-executed chains with live streaming
+      output.</h2>
     <p class="mx-auto text-center text-body-secondary narrative">
       Pick a ready-made enterprise workflow, stream an architect plan, toggle the suggested datasets, and watch
       validation + execution agents work in sequence with markdown-rendered output and flow nodes.
@@ -87,7 +150,8 @@
       </div>
       <div class="card-body">
         <form id="custom-problem-form" class="d-flex flex-column gap-3">
-          <textarea id="custom-problem" rows="4" class="form-control" placeholder="Describe the workflow or problem statement you want the architect to plan."></textarea>
+          <textarea id="custom-problem" rows="4" class="form-control"
+            placeholder="Describe the workflow or problem statement you want the architect to plan."></textarea>
           <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
             <small class="text-body-secondary">We send this text directly to the architect model.</small>
             <button type="submit" class="btn btn-success" id="run-custom-problem">Plan &amp; Run Custom</button>
@@ -135,7 +199,8 @@
           <div class="col-md-6">
             <label class="form-label" for="flow-columns">Flow Columns</label>
             <input class="form-control" type="number" min="1" max="6" step="1" id="flow-columns" name="flowColumns" />
-            <small class="text-body-secondary">Controls how many parallel lanes the flowchart can use for branching.</small>
+            <small class="text-body-secondary">Controls how many parallel lanes the flowchart can use for
+              branching.</small>
           </div>
         </div>
       </details>
