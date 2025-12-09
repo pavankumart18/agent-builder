@@ -18,15 +18,12 @@
       border-radius: 1rem;
     }
 
-    .flow-grid {
-      display: flex;
-      gap: 1rem;
-      overflow-x: auto;
-      padding-bottom: 0.75rem;
-    }
-
-    .flow-node {
-      min-width: 240px;
+    .flowchart-canvas {
+      min-height: 500px;
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+      background: var(--bs-body-bg);
     }
 
     .agent-stream {
@@ -128,6 +125,18 @@
             <label class="form-label" for="max-agents">Max Agents</label>
             <input class="form-control" type="number" min="2" max="6" id="max-agents" name="maxAgents" />
           </div>
+          <div class="col-md-6">
+            <label class="form-label" for="flow-orientation">Flow Orientation</label>
+            <select class="form-select" id="flow-orientation" name="flowOrientation">
+              <option value="horizontal">Horizontal (side-by-side)</option>
+              <option value="vertical">Vertical (top-to-bottom)</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="flow-columns">Flow Columns</label>
+            <input class="form-control" type="number" min="1" max="6" step="1" id="flow-columns" name="flowColumns" />
+            <small class="text-body-secondary">Controls how many parallel lanes the flowchart can use for branching.</small>
+          </div>
         </div>
       </details>
     </form>
@@ -143,7 +152,8 @@
         "lit-html": "https://cdn.jsdelivr.net/npm/lit-html@3.3.1/+esm",
         "lit-html/directives/unsafe-html.js": "https://cdn.jsdelivr.net/npm/lit-html@3.3.1/directives/unsafe-html.js",
         "marked": "https://cdn.jsdelivr.net/npm/marked@13.0.3/+esm",
-        "saveform": "https://cdn.jsdelivr.net/npm/saveform@1.4.0"
+        "saveform": "https://cdn.jsdelivr.net/npm/saveform@1.4.0",
+        "cytoscape": "https://cdn.jsdelivr.net/npm/cytoscape@3.29.2/+esm"
       }
     }
   </script>

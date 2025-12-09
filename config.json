@@ -4,9 +4,11 @@
   "narrative": "Each card seeds a realistic workflow. Run the architect to auto-generate specialist roles, review the suggested datasets, upload your own context, and stream the chain result inside the browser.",
   "defaults": {
     "model": "gpt-5-mini",
-    "architectPrompt": "Respond ONLY with JSON shaped as {\"plan\":[...],\"inputs\":[...]}. \"plan\": 2-5 agents, each with {\"agentName\",\"systemInstruction\",\"initialTask\"}. At least one validator. \"inputs\": up to 3 sample datasets with {\"title\",\"type\",\"sample\"}. Types: text,csv,json. Keep samples short (<=120 words).",
+    "architectPrompt": "Respond ONLY with JSON shaped as {\"plan\":[...],\"inputs\":[...]}. \"plan\": 3-6 agents. Each agent MUST include {\"agentName\",\"systemInstruction\",\"initialTask\",\"stage\",\"next\"}. \"stage\" is an integer (1-n) that groups agents that can run in parallel. \"next\" is an array of agentName strings showing downstream steps; use it to express branches/fan-ins so the graph is a DAG. Include at least one validator/QA step. \"inputs\": up to 3 sample datasets with {\"title\",\"type\",\"sample\"}. Types: text,csv,json. Keep samples short (<=120 words).",
     "agentStyle": "You are a focused specialist. Answer in <=50 words using crisp markdown bullets.",
-    "maxAgents": 5
+    "maxAgents": 5,
+    "flowOrientation": "horizontal",
+    "flowColumns": 3
   },
   "demos": [
     {
