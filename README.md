@@ -1,29 +1,84 @@
 # Agent Builder
 
-Browser-based demo scaffolded from the `sanand0/scripts` demos skill: pick a workflow card, stream the architect plan as raw JSON via SSE, toggle the suggested datasets, upload your own context, and run every specialist agent with `lit-html` UI updates and markdown streaming.
+A powerful, local-first web application for architecting and executing multi-agent workflows. Build, visualize, and run complex chains of AI agents directly in your browser.
 
-## Features
+**[🌐 Try the Live Demo](https://pavankumart18.github.io/agent-builder/)**
 
-- **Pure front-end stack** - `index.html` mirrors the reference navbar, hero, and settings layout, includes CDN import maps, and works from any static host.
-- **Config-driven demos** - `config.json` exposes `demos[]` cards (icon, copy, problem brief, starter datasets) plus `defaults` for prompts, models, and max agents.
-- **Custom briefs** - A “Bring Your Own Problem” form lets you stream the architect + agents against any ad-hoc statement without editing configs.
-- **Stateful settings** - The collapsible form persists via `saveform`, so model and prompt overrides survive reloads and can be reset instantly.
-- **LLM plumbing** - Credentials come from `bootstrap-llm-provider`, streaming is handled with a custom SSE decoder (mimicking the legacy repo), and agent responses render through `marked` + `highlight.js`.
-- **Responsive UX** - Every streaming stage shows a Bootstrap spinner, flow nodes reflect live status, uploads stay local, and markdown output is safe-rendered with `unsafeHTML`.
+![Agent Builder Demo](https://via.placeholder.com/800x400?text=Agent+Builder+UI)
 
-## Getting Started
+## 🚀 Features
 
-1. Open `index.html` in any modern browser (no build step required).
-2. Click **Configure LLM** in the navbar and enter an OpenAI-compatible base URL plus API key (stored by `bootstrap-llm-provider`).
-3. Optionally tweak the **Settings** form (model, architect prompt, agent style, max agents) - all values persist automatically via `saveform`.
-4. Either pick a starter card **or** paste your own brief into *Bring Your Own Problem*, hit **Plan & Run**, review the architect plan + suggested datasets, attach/paste extra data, and press **Start Agents** to stream each specialist output while the flow nodes update live.
+*   **Architect Mode**: intelligently breaks down complex user problems into a structured plan of specialist agents.
+*   **Parallel Execution**: Runs independent agents concurrently in the same stage for faster results (e.g., parallel data analysis).
+*   **Live Flowchart**: Visualizes the agent execution graph dynamically using Cytoscape.js.
+*   **Streaming & Real-time**: Watch agent outputs stream in real-time with Markdown support.
+*   **Modular Design**: Clean separation of concerns (Model-View-Controller) for easy extensibility.
+*   **Customizable**: Fully data-driven via `config.json` to add new demos or adjust defaults.
+*   **Local First**: No backend required other than an LLM API endpoint. Runs on any static HTTP server.
 
-## Customization
+## 🛠️ Setup & Usage
 
-- **Demos**: edit `config.json` -> `demos[]` to change card metadata or starter datasets. Keep synthetic CSV/JSON/Text blobs under ~1 MB each per the SKILL guidance.
-- **Defaults**: adjust `config.json` -> `defaults` to control the initial model, architect prompt, agent style, or max-agents guardrail.
-- **Logic/UI**: tweak `script.js` to change prompts, streaming behavior, or rendering. Because the app uses `lit-html`, all state changes funnel through `setState`.
+1.  **Prerequisites**:
+    *   A modern web browser (Chrome, Edge, Firefox).
+    *   Python (for the simple local server) or any other static file server (e.g., `http-server`).
+    *   One of the following LLM providers:
+        *   OpenAI API Key
+        *   Compatible OpenAI-formatted endpoint (e.g., vLLM, local inference)
 
-## Deployment
+2.  **Installation**:
+    ```bash
+    git clone https://github.com/pavankumart18/agent-builder.git
+    cd agent-builder
+    ```
 
-The project is static and GitHub Pages friendly. Host the folder anywhere (Pages, Netlify, Vercel, S3, etc.) ensuring `config.json` sits beside `index.html`. No backend services are required - credentials and files stay local except for calls sent directly to the configured LLM endpoint.
+3.  **Running the App**:
+    Start a local server in the project directory:
+    ```bash
+    # Using Python
+    python -m http.server 8000
+    
+    # OR using Node.js
+    npx http-server .
+    ```
+    Open [http://localhost:8000](http://localhost:8000) in your browser.
+
+4.  **Configuration**:
+    *   Click the **"Configure LLM"** button in the top right to set your API Key and Base URL.
+    *   Select a demo card (e.g., "Regulatory Compliance", "Parallel Analysis") to start.
+
+## 📂 Project Structure
+
+The project has been refactored for modularity and performance:
+
+*   **`index.html`**: Main entry point and CSS styles.
+*   **`script.js`**: Main Controller. Handles state management and coordinates the app logic.
+*   **`view.js`**: Pure UI components using `lit-html`. Handles all DOM rendering.
+*   **`utils.js`**: Helper functions, data processing, and graph algorithms.
+*   **`flowchart.js`**: Wrapper around `cytoscape.js` for managing the interactive graph visualization.
+*   **`config.json`**: Configuration file defining available demos, default settings, and prompt templates.
+
+## 🧩 Adding Custom Demos
+
+You can add your own workflows by editing `config.json`. Add a new entry to the `demos` array:
+
+```json
+{
+  "title": "My Custom Workflow",
+  "icon": "bi bi-star",
+  "problem": "Describe what the architect should solve...",
+  "inputs": [
+    { "title": "Context", "type": "text", "content": "Sample data..." }
+  ]
+}
+```
+
+## 🤝 Contributing
+
+1.  Fork the repository.
+2.  Create a feature branch (`git checkout -b feature/amazing-agent`).
+3.  Commit your changes.
+4.  Open a Pull Request.
+
+## 📄 License
+
+MIT License.
