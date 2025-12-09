@@ -12,6 +12,29 @@
   },
   "demos": [
     {
+      "icon": "bi bi-cpu-fill",
+      "title": "Parallel Analysis",
+      "body": "Run multiple analysis agents concurrently.",
+      "problem": "Analyze the financial health of 'TechCorp' by running three distinct analyses in parallel: 1) Technical Analysis of stock trends, 2) Fundamental Analysis of balance sheets, and 3) Sentiment Analysis of news. After these three parallel agents finish, run a Summarizer agent to combine their findings into a final report.",
+      "inputs": [
+        {
+          "title": "Stock Data",
+          "type": "csv",
+          "content": "date,close,volume\n2023-01-01,150.2,10000\n2023-01-02,153.5,12000"
+        },
+        {
+          "title": "News Feed",
+          "type": "text",
+          "content": "TechCorp announces new AI chip. Market reacts positively. CEO rumors surfacing."
+        },
+        {
+          "title": "Balance Sheet",
+          "type": "json",
+          "content": "{ \"assets\": 500000, \"liabilities\": 200000, \"equity\": 300000 }"
+        }
+      ]
+    },
+    {
       "icon": "bi bi-shield-check",
       "title": "Regulatory Compliance",
       "body": "Audit 10-K style filings against SEC + Basel guidance.",
