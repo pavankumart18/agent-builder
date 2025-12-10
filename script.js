@@ -3,6 +3,7 @@ import saveform from "saveform";
 import { createFlowchart } from "./flowchart.js";
 import * as Utils from "./utils.js";
 import * as View from "./view.js";
+import { Storage } from "./storage.js";
 
 const $ = (s) => document.querySelector(s);
 const DEFAULT_BASE_URLS = ["https://api.openai.com/v1", "https://llmfoundry.straivedemo.com/openai/v1"];
@@ -12,7 +13,11 @@ let state = {
   selectedDemoIndex: null, stage: "idle", plan: [], suggestedInputs: [], selectedInputs: new Set(),
   uploads: [], notes: "", agentOutputs: [], architectBuffer: "", error: "", customProblem: null,
   focusedNodeId: null, runningNodeIds: new Set(), latestNodeId: null,
-  flowOrientation: "horizontal", flowColumns: 2
+  flowOrientation: "horizontal", flowColumns: 2,
+  focusedNodeId: null, runningNodeIds: new Set(), latestNodeId: null,
+  flowOrientation: "horizontal", flowColumns: 2,
+  savedAgents: [], supabaseConfigured: false, session: null,
+  editingAgentId: null
 };
 
 const llmSession = { creds: null };
@@ -40,8 +45,123 @@ const actions = {
     if (!val) return setState({ error: "Enter a problem first.", stage: "idle" }); // Fix focus later
     selectCustomProblem(val);
     runArchitect();
+  },
+  // Supabase Actions
+  configureSupabase: async () => {
+    // If config is missing, prompt user to edit config.json for persistence, or use prompt for temp session
+    const choice = confirm("To configure Supabase permanently, add your URL and Key to 'config.json'.\n\nClick OK to reload config from file (if you edited it).\nClick Cancel to enter credentials temporarily for this session.");
+
+    if (choice) {
+      // Reload config
+      try {
+        const newConfig = await fetch("config.json").then(r => r.json());
+        const url = newConfig.supabase?.url;
+        const key = newConfig.supabase?.key;
+        if (url && key) {
+          const ok = await Storage.init(url, key);
+          setState({ supabaseConfigured: ok, session: Storage.getSession() });
+          if (ok) refreshAgents();
+          alert(ok ? "Supabase connected from config.json!" : "Connection failed even with config.");
+        } else {
+          alert("No credentials found in config.json. Please edit the file.");
+        }
+      } catch (e) { alert("Error reloading config: " + e.message); }
+    } else {
+      const url = prompt("Enter Supabase Project URL (e.g., https://xyz.supabase.co):");
+      const key = prompt("Enter Supabase PUBLIC ANON Key:\n(Note: This key is safe to use in the browser as long as your database has RLS enabled. Do NOT use the Service Role key.)");
+      if (url && key) {
+        localStorage.setItem("supabase_url", url);
+        localStorage.setItem("supabase_key", key);
+        const ok = await Storage.init(url, key);
+        setState({ supabaseConfigured: ok, session: Storage.getSession() });
+        if (ok) refreshAgents();
+      }
+    }
+  },
+  login: async () => {
+    try { await Storage.login(); } catch (e) { alert(e.message); }
+  },
+  logout: async () => {
+    await Storage.logout();
+    setState({ session: null, savedAgents: [] });
+  },
+  saveAgent: async () => {
+    // If editing, try to find existing title
+    const existingTitle = state.editingAgentId
+      ? state.savedAgents.find(a => a.id === state.editingAgentId)?.title
+      : "";
+
+    const title = prompt("Name your agent:", existingTitle || "My Custom Agent");
+    if (!title) return;
+    try {
+      const inputsToSave = state.suggestedInputs.filter(i => state.selectedInputs.has(i.id));
+      const agent = {
+        id: state.editingAgentId || crypto.randomUUID(),
+        title,
+        problem: state.selectedDemoIndex === -1 ? state.customProblem?.problem : config.demos[state.selectedDemoIndex]?.problem,
+        plan: state.plan,
+        inputs: inputsToSave
+      };
+      await Storage.saveAgent(agent);
+      refreshAgents();
+      // Keep edit ID so subsequent saves update the same agent, or clear? 
+      // User might want to version. But typically "Save" means save this.
+      // Let's keep it.
+      setState({ editingAgentId: agent.id });
+      alert("Agent saved!");
+    } catch (e) { alert("Save failed: " + e.message); }
+  },
+  deleteAgent: async (id) => {
+    if (!confirm("Delete this agent?")) return;
+    try {
+      await Storage.deleteAgent(id);
+      refreshAgents();
+    } catch (e) { alert("Delete failed: " + e.message); }
+  },
+  loadSavedAgent: (agent) => {
+    // Directly go to data/run stage, skipping architect
+    // User requirement: "these saved agents should not again call plan or architect"
+    // We load them into the state as if they were just planned.
+    setState({
+      selectedDemoIndex: -2, // Special index for saved agent
+      customProblem: { title: agent.title, problem: agent.problem },
+      plan: agent.plan,
+      suggestedInputs: agent.inputs || [],
+      selectedInputs: new Set((agent.inputs || []).map(i => i.id)),
+      stage: "data", // Ready to start inputs or run
+      agentOutputs: [],
+      error: "",
+      editingAgentId: null // Clear separate edit session
+    });
+  },
+  editAgent: (agent) => {
+    // Populate custom problem and enter edit mode
+    $("#custom-problem").value = agent.problem;
+
+    // Reset to idle so we don't auto-scroll to 'data' or 'run' via the main render loop
+    setState({
+      editingAgentId: agent.id,
+      error: "",
+      stage: "idle",
+      plan: [],
+      agentOutputs: [],
+      selectedDemoIndex: -1 // Ensure we are in custom mode
+    });
+
+    // UI Feedback & Focus
+    setTimeout(() => {
+      const section = $("#custom-problem-section");
+      const textarea = $("#custom-problem");
+      if (section) section.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (textarea) textarea.focus();
+    }, 50);
   }
 };
+
+async function refreshAgents() {
+  const agents = await Storage.listAgents();
+  setState({ savedAgents: agents });
+}
 
 // Initialization
 (async () => {
@@ -65,17 +185,37 @@ const actions = {
   if ($("#flow-orientation")) $("#flow-orientation").value = Utils.normalizeFlowOrientation(defaults.flowOrientation);
   if ($("#flow-columns")) $("#flow-columns").value = Utils.clampFlowColumns(defaults.flowColumns);
 
-  View.renderDemoCards($("#demo-cards"), config.demos, state.selectedDemoIndex, ["architect", "run"].includes(state.stage), actions.planDemo);
+  if ($("#flow-columns")) $("#flow-columns").value = Utils.clampFlowColumns(defaults.flowColumns);
+
+  // Init Supabase from config.json if present, else localStorage
+  let sbUrl = config.supabase?.url || localStorage.getItem("supabase_url");
+  let sbKey = config.supabase?.key || localStorage.getItem("supabase_key");
+
+  // If config has placeholders, ignore them
+  if (sbUrl === "") sbUrl = null;
+  if (sbKey === "") sbKey = null;
+
+  if (sbUrl && sbKey) {
+    const ok = await Storage.init(sbUrl, sbKey);
+    setState({ supabaseConfigured: ok, session: Storage.getSession() });
+    if (ok) refreshAgents();
+  }
+
+  View.renderDemoCards($("#demo-cards"), config.demos, state.savedAgents, state, actions);
   render();
 
   // Event Listeners
   $("#configure-llm")?.addEventListener("click", async () => llmSession.creds = await openaiConfig({ defaultBaseUrls: DEFAULT_BASE_URLS, show: true }));
   $("#custom-problem-form")?.addEventListener("submit", actions.handleCustomProblemSubmit);
 
+  // Supabase UI Bindings (We will add these buttons in View)
+  // For global nav buttons that might not be re-rendered:
+  // We'll rely on View to render auth buttons inside the app or a specific container if we add one.
+  // Actually, let's just use the View.renderApp to handling the auth UI.
+
   const settingsForm = saveform("#settings-form");
   $("#settings-form")?.addEventListener("reset", () => setTimeout(() => {
     settingsForm.clear();
-    const fd = new FormData($("#settings-form")); // re-read defaults if needed or just reset state
     // simpler to just call scheduleSync
     scheduleFlowchartSync();
   }, 0));
@@ -86,6 +226,12 @@ const actions = {
   };
   $("#flow-orientation")?.addEventListener("change", updateLayout);
   $("#flow-columns")?.addEventListener("input", updateLayout);
+
+  window.addEventListener('auth-changed', (e) => {
+    setState({ session: e.detail });
+    if (e.detail) refreshAgents();
+    else setState({ savedAgents: [] });
+  });
 })();
 
 function setState(updates) {
@@ -94,8 +240,9 @@ function setState(updates) {
 }
 
 function render() {
-  View.renderDemoCards($("#demo-cards"), config.demos, state.selectedDemoIndex, ["architect", "run"].includes(state.stage), actions.planDemo);
+  View.renderDemoCards($("#demo-cards"), config.demos, state.savedAgents, state, actions);
   View.renderApp($("#output"), state, config, actions);
+  View.renderAuth($("#auth-controls"), state, actions);
   syncCustomButton();
   scheduleFlowchartSync();
   scheduleScrollToRunningSection();
@@ -105,7 +252,7 @@ function render() {
 function selectDemo(index) {
   const demo = config.demos[index];
   const inputs = (demo?.inputs || []).map(i => ({ ...i, id: Utils.uniqueId("input") }));
-  resetRunState({ selectedDemoIndex: index, suggestedInputs: inputs, selectedInputs: new Set(inputs.map(i => i.id)) });
+  resetRunState({ selectedDemoIndex: index, suggestedInputs: inputs, selectedInputs: new Set(inputs.map(i => i.id)), editingAgentId: null });
 }
 
 function selectCustomProblem(problem) {
@@ -120,6 +267,12 @@ async function runArchitect() {
   try {
     const creds = await ensureCreds();
     const demo = state.selectedDemoIndex === -1 ? state.customProblem : config.demos[state.selectedDemoIndex];
+    if (state.selectedDemoIndex === -2) { // saved agent re-run (shouldn't really happen here but safe guard)
+      // just go to data
+      setState({ stage: "data" });
+      return;
+    }
+
     const model = $("#model")?.value || "gpt-5-mini";
     const maxAgents = Math.min(Math.max(parseInt($("#max-agents")?.value || 5), 2), 6);
 
@@ -177,7 +330,7 @@ async function startAgents() {
             body: {
               model, stream: true, messages: [
                 { role: "system", content: `${out.instruction}\n${agentStyle}\nOutput Markdown. Keep response under 150 words.` },
-                { role: "user", content: `Problem:\n${state.selectedDemoIndex === -1 ? state.customProblem.problem : config.demos[state.selectedDemoIndex].problem}\n\nTask:\n${out.task}\n\nInput:\n${inputBlob}\n\nContext:\n${Utils.truncate(context, 1200)}` }
+                { role: "user", content: `Problem:\n${(state.selectedDemoIndex >= 0 ? config.demos[state.selectedDemoIndex].problem : state.customProblem?.problem || "Problem")}\n\nTask:\n${out.task}\n\nInput:\n${inputBlob}\n\nContext:\n${Utils.truncate(context, 1200)}` }
               ]
             },
             onChunk: (t) => { buffer += t; updateAgent(out.id, buffer, "running"); }

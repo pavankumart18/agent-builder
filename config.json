@@ -2,6 +2,10 @@
   "title": "Agent Builder",
   "subtitle": "Multi-agent demos with architect planning, dataset toggles, and streaming chains.",
   "narrative": "Each card seeds a realistic workflow. Run the architect to auto-generate specialist roles, review the suggested datasets, upload your own context, and stream the chain result inside the browser.",
+  "supabase": {
+    "url": "https://cjjvgiczswsiqhcvapjp.supabase.co",
+    "key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqanZnaWN6c3dzaXFoY3ZhcGpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUzODA3MTIsImV4cCI6MjA4MDk1NjcxMn0.CRQMGRp0QzMQ4uq2ZduWItYVZqjcvIv4AWPTiBfaY-k"
+  },
   "defaults": {
     "model": "gpt-5-mini",
     "architectPrompt": "Respond ONLY with JSON shaped as {\"plan\":[...],\"inputs\":[...]}. \"plan\": 3-6 agents. Each agent MUST include {\"agentName\",\"systemInstruction\",\"initialTask\",\"stage\",\"next\"}. \"stage\" is an integer (1-n) that groups agents that can run in parallel. \"next\" is an array of agentName strings showing downstream steps; use it to express branches/fan-ins so the graph is a DAG. Include at least one validator/QA step. \"inputs\": up to 3 sample datasets with {\"title\",\"type\",\"sample\"}. Types: text,csv,json. Keep samples short (<=120 words). Analyze the problem to determine the optimal flow: choose Linear (sequential) if steps are strictly dependent, or Parallel (concurrent) if tasks can happen simultaneously for efficiency.",

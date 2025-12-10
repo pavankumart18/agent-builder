@@ -15,24 +15,76 @@ const marked = new Marked({
 
 const loading = html`<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>`;
 
-export function renderDemoCards(container, demos, selectedIndex, busy, onPlan) {
-  render(
-    (demos || []).map((demo, index) => html`
+export function renderDemoCards(container, demos, savedAgents, state, actions) {
+  const busy = ["architect", "run"].includes(state.stage);
+  const selectedIndex = state.selectedDemoIndex;
+
+  render(html`
+    <div class="col-12 mb-3 d-flex justify-content-between align-items-center">
+        <h4 class="mb-0 text-body-secondary">Templates</h4>
+    </div>
+    ${(demos || []).map((demo, index) => html`
       <div class="col-sm-6 col-lg-4">
         <div class="card demo-card h-100 shadow-sm">
           <div class="card-body d-flex flex-column">
             <div class="text-center text-primary display-5 mb-3"><i class="${demo.icon}"></i></div>
             <h5 class="card-title">${demo.title}</h5>
             <p class="card-text text-body-secondary small flex-grow-1">${demo.body}</p>
-            <button class="btn btn-primary mt-auto" @click=${() => onPlan(index)} ?disabled=${busy}>
+            <button class="btn btn-primary mt-auto" @click=${() => actions.planDemo(index)} ?disabled=${busy}>
               ${busy && selectedIndex === index ? "Streaming..." : "Plan & Run"}
             </button>
           </div>
         </div>
       </div>
-    `),
-    container
-  );
+    `)}
+    ${renderSavedAgents(savedAgents, state, actions)}
+  `, container);
+}
+
+export function renderAuth(container, state, actions) {
+  render(html`
+    ${!state.supabaseConfigured
+      ? html`<button class="btn btn-sm btn-outline-warning text-white" @click=${actions.configureSupabase}><i class="bi bi-gear"></i> Connect Supabase</button>`
+      : !state.session
+        ? html`<button class="btn btn-sm btn-light" @click=${actions.login}><i class="bi bi-google"></i> Sign In</button>`
+        : html`
+        <div class="dropdown">
+            <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                ${state.session.user.email}
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><button class="dropdown-item" @click=${actions.logout}>Sign Out</button></li>
+            </ul>
+        </div>`}
+  `, container);
+}
+
+function renderSavedAgents(agents, state, actions) {
+  if (!state.session) return null;
+  return html`
+    <div class="col-12 mt-4 mb-3"><h4 class="mb-0 text-body-secondary">My Agents</h4></div>
+    ${(!agents || !agents.length)
+      ? html`<div class="col-12 text-center text-body-secondary py-3">No saved agents found. Create a plan and save it to see it here.</div>`
+      : agents.map(agent => html`
+      <div class="col-sm-6 col-lg-4">
+        <div class="card demo-card h-100 shadow-sm border-primary">
+          <div class="card-header bg-primary-subtle text-primary border-primary d-flex justify-content-between align-items-center">
+            <small><i class="bi bi-robot"></i> Saved Agent</small>
+            <div class="d-flex gap-2">
+              <button class="btn btn-sm btn-link text-primary p-0" style="text-decoration:none" title="Edit Agent" @click=${() => actions.editAgent(agent)}><i class="bi bi-pencil-square"></i></button>
+              <button class="btn btn-sm btn-link text-danger p-0" style="text-decoration:none" title="Delete Agent" @click=${() => actions.deleteAgent(agent.id)}><i class="bi bi-trash"></i></button>
+            </div>
+          </div>
+          <div class="card-body d-flex flex-column">
+            <h5 class="card-title">${agent.title}</h5>
+            <p class="card-text text-body-secondary small flex-grow-1 text-truncate" style="max-height: 4.5em; overflow: hidden;">${agent.problem}</p>
+            <button class="btn btn-primary mt-auto" @click=${() => actions.loadSavedAgent(agent)} ?disabled=${["architect", "run"].includes(state.stage)}>
+              Run Agent
+            </button>
+          </div>
+        </div>
+      </div>
+    `)}`;
 }
 
 export function renderApp(container, state, config, actions) {
@@ -40,14 +92,16 @@ export function renderApp(container, state, config, actions) {
     render(html`<div class="text-center text-body-secondary py-5"><p>Select a card above to stream the architect plan and run the agents.</p></div>`, container);
     return;
   }
-  const demo = state.selectedDemoIndex === -1 ? state.customProblem : config.demos[state.selectedDemoIndex];
+  const demo = state.selectedDemoIndex === -1 ? state.customProblem : (state.selectedDemoIndex === -2 ? state.customProblem : config.demos[state.selectedDemoIndex]);
+  // Note: for separate saved agent (idx -2), we use customProblem struct to hold title/problem.
+
   render(html`
       ${state.error ? html`<div class="alert alert-danger">${state.error}</div>` : null}
       <section class="card mb-4">
         <div class="card-body"><h3 class="h4 mb-2">${demo.title}</h3><p class="mb-0 text-body-secondary small">${demo.problem}</p></div>
       </section>
       ${renderStageBadges(state)}
-      ${renderPlan(state)}
+      ${renderPlan(state, actions)}
       ${renderDataInputs(state, actions)}
       ${renderFlow(state)}
       ${renderAgentOutputs(state)}
@@ -66,14 +120,17 @@ function renderStageBadges(state) {
     </div>`;
 }
 
-function renderPlan(state) {
+function renderPlan(state, actions) {
   const streaming = state.stage === "architect";
   const hasPlan = state.plan.length > 0;
   return html`
     <section class="card mb-4" data-running-key=${streaming ? "architect-plan" : null}>
       <div class="card-header d-flex justify-content-between align-items-center">
         <span><i class="bi bi-diagram-3 me-2"></i> Architect Plan</span>
-        <span class="badge text-bg-${streaming ? "primary" : hasPlan ? "success" : "secondary"}">${streaming ? "Planning" : hasPlan ? "Ready" : "Pending"}</span>
+        <div class="d-flex gap-2 align-items-center">
+            <span class="badge text-bg-${streaming ? "primary" : hasPlan ? "success" : "secondary"}">${streaming ? "Planning" : hasPlan ? "Ready" : "Pending"}</span>
+            ${(hasPlan && state.session && state.selectedDemoIndex !== -2) ? html`<button class="btn btn-sm btn-outline-success" @click=${actions.saveAgent}><i class="bi bi-save"></i> Save</button>` : null}
+        </div>
       </div>
       <div class="card-body">
         ${streaming ? html`
