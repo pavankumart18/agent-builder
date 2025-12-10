@@ -251,19 +251,7 @@ function scheduleScrollToRunningSection() {
 function getRunningScrollKey() {
   if (state.stage === "architect") return "architect-plan";
   if (state.stage === "data") return "data-inputs";
-
-  // Prioritize focused node if user clicked one
-  if (state.focusedNodeId) return `node-${state.focusedNodeId}`;
-
-  // Otherwise follow the latest or running node
-  if (state.stage === "run" || state.stage === "idle") {
-    // If we have a latest active node (from streaming), use that
-    if (state.latestNodeId) return `node-${state.latestNodeId}`;
-
-    // Fallback to the last output in the list
-    const lastOutput = state.agentOutputs[state.agentOutputs.length - 1];
-    if (lastOutput) return `node-${lastOutput.nodeId}`;
-  }
+  if (state.stage === "run") return "execution-flow";
   return null;
 }
 
