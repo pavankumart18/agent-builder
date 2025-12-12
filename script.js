@@ -362,7 +362,7 @@ async function ensureCreds() {
 
 function syncCustomButton() {
   const btn = $("#run-custom-problem");
-  if (btn) { btn.disabled = ["architect", "run"].includes(state.stage); btn.textContent = btn.disabled ? "Streaming..." : "Plan & Run Custom"; }
+  if (btn) { btn.disabled = ["architect", "run"].includes(state.stage); btn.textContent = btn.disabled ? "Streaming..." : "Plan & Build Custom"; }
 }
 
 // Queue scrolling

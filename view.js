@@ -31,7 +31,7 @@ export function renderDemoCards(container, demos, savedAgents, state, actions) {
             <h5 class="card-title">${demo.title}</h5>
             <p class="card-text text-body-secondary small flex-grow-1">${demo.body}</p>
             <button class="btn btn-primary mt-auto" @click=${() => actions.planDemo(index)} ?disabled=${busy}>
-              ${busy && selectedIndex === index ? "Streaming..." : "Plan & Run"}
+              ${busy && selectedIndex === index ? "Streaming..." : "Plan and Build"}
             </button>
           </div>
         </div>
@@ -46,7 +46,7 @@ export function renderAuth(container, state, actions) {
     ${!state.supabaseConfigured
       ? html`<button class="btn btn-sm btn-outline-warning text-white" @click=${actions.configureSupabase}><i class="bi bi-gear"></i> Connect Supabase</button>`
       : !state.session
-        ? html`<button class="btn btn-sm btn-light" @click=${actions.login}><i class="bi bi-google"></i> Sign In</button>`
+        ? html`<button class="btn btn-sm btn-light" @click=${actions.login}><i class="bi bi-google"></i>Sign In</button>`
         : html`
         <div class="dropdown">
             <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
@@ -79,7 +79,7 @@ function renderSavedAgents(agents, state, actions) {
             <h5 class="card-title">${agent.title}</h5>
             <p class="card-text text-body-secondary small flex-grow-1 text-truncate" style="max-height: 4.5em; overflow: hidden;">${agent.problem}</p>
             <button class="btn btn-primary mt-auto" @click=${() => actions.loadSavedAgent(agent)} ?disabled=${["architect", "run"].includes(state.stage)}>
-              Run Agent
+              Load Agent
             </button>
           </div>
         </div>
@@ -236,7 +236,7 @@ function renderFlowOutputPanel(state) {
         ${status ? html`<span class="badge text-bg-${status.c}">${status.l}</span>` : null}
       </div>
       <div class="${output ? agentStreamClasses(output) : "agent-stream border rounded-3 p-3 bg-body"} flex-grow-1 overflow-auto">
-        ${output ? renderOutputBody(output) : html`<div class="text-body-secondary small">${state.focusedNodeId ? "No output recorded." : "Run agents to stream output."}</div>`}
+        ${output ? renderOutputBody(output) : html`<div class="text-body-secondary small">${state.focusedNodeId ? "No output recorded." : "Build agents to stream output."}</div>`}
       </div>
     </div>`;
 }
