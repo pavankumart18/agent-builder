@@ -46,7 +46,7 @@ export function renderAuth(container, state, actions) {
     ${!state.supabaseConfigured
       ? html`<button class="btn btn-sm btn-outline-warning text-white" @click=${actions.configureSupabase}><i class="bi bi-gear"></i> Connect Supabase</button>`
       : !state.session
-        ? html`<button class="btn btn-sm btn-light" @click=${actions.login}><i class="bi bi-google"></i>Sign In</button>`
+        ? html`<button class="btn btn-sm btn-light" @click=${actions.login}>Sign In</button>`
         : html`
         <div class="dropdown">
             <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
