@@ -246,7 +246,14 @@ export function createFlowchart(containerOrSelector, elements = [], options = {}
 function createLayoutOptions(orientation = "horizontal", columnCount = 2) {
   const horizontal = orientation !== "vertical";
   const columns = sanitizeColumnCount(columnCount);
-  const spacingFactor = 1 + columns * 0.2;
+
+  // Horizontal single-lane flows looked overly spaced, forcing Cytoscape to zoom way out.
+  // Nudge spacing down in that scenario so arrows stay medium length while keeping enough room for labels.
+  const baseSpacing = horizontal
+    ? (columns <= 2 ? 0.95 : 0.95 + (columns - 2) * 0.12)
+    : 1 + columns * 0.2;
+  const spacingFactor = Math.min(Math.max(baseSpacing, 0.85), 1.35);
+
   const padding = 24 + columns * 6;
   return {
     name: "breadthfirst",
