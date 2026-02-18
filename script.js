@@ -1,3 +1,4 @@
+// VERSION: 2024-01-XX - Added hardcoded plan support for grant-to-growth-predictor
 import { openaiConfig } from "bootstrap-llm-provider";
 import saveform from "saveform";
 import { createFlowchart } from "./flowchart.js";
@@ -22,7 +23,46 @@ let state = {
 
 const llmSession = { creds: null };
 const actions = {
-  planDemo: (i) => { selectDemo(i); runArchitect(); },
+  planDemo: (i) => { 
+    console.log("planDemo called with index:", i);
+    // Check for hardcoded plan BEFORE selecting demo - access config directly
+    if (!config || !config.demos || !config.demos[i]) {
+      console.error("Config or demo not available at index:", i);
+      selectDemo(i); 
+      runArchitect();
+      return;
+    }
+    
+    const demo = config.demos[i];
+    console.log("Demo found:", demo.title, "ID:", demo.id, "Plan structure:", demo.plan);
+    
+    // Explicit check for hardcoded plan structure: demo.plan.plan (array)
+    // Also check by ID as fallback
+    const isGrantToGrowth = demo.id === 'grant-to-growth-predictor';
+    const hasPlanStructure = demo.plan && 
+                              typeof demo.plan === 'object' && 
+                              demo.plan.hasOwnProperty('plan') &&
+                              Array.isArray(demo.plan.plan) && 
+                              demo.plan.plan.length > 0;
+    const hasHardcodedPlan = hasPlanStructure || (isGrantToGrowth && demo.plan);
+    
+    console.log("Is Grant-to-Growth?", isGrantToGrowth);
+    console.log("Has plan structure?", hasPlanStructure);
+    console.log("Has hardcoded plan?", hasHardcodedPlan);
+    
+    if (hasHardcodedPlan) {
+      // Has hardcoded plan - use it directly, skip API call
+      console.log("✓ Using hardcoded plan - SKIPPING API CALL");
+      selectDemo(i);
+      useHardcodedPlan(demo);
+      return; // CRITICAL: Exit here, do NOT call runArchitect
+    }
+    
+    // No hardcoded plan - proceed normally
+    console.log("✗ No hardcoded plan - will call architect API");
+    selectDemo(i); 
+    runArchitect(); 
+  },
   startAgents: () => startAgents(),
   toggleSuggestedInput: (id) => {
     const next = new Set(state.selectedInputs);
@@ -251,8 +291,15 @@ function render() {
 // Logic
 function selectDemo(index) {
   const demo = config.demos[index];
-  const inputs = (demo?.inputs || []).map(i => ({ ...i, id: Utils.uniqueId("input") }));
+  if (!demo) {
+    setState({ error: "Demo not found.", stage: "idle" });
+    return;
+  }
+  const inputs = (demo.inputs || []).map(i => ({ ...i, id: Utils.uniqueId("input") }));
   resetRunState({ selectedDemoIndex: index, suggestedInputs: inputs, selectedInputs: new Set(inputs.map(i => i.id)), editingAgentId: null });
+  
+  // Store demo reference for immediate access in runArchitect
+  state.selectedDemo = demo;
 }
 
 function selectCustomProblem(problem) {
@@ -263,25 +310,87 @@ function resetRunState(extras) {
   setState({ ...extras, stage: "architect", plan: [], agentOutputs: [], architectBuffer: "", error: "", focusedNodeId: null, runningNodeIds: new Set(), latestNodeId: null });
 }
 
+function useHardcodedPlan(demo) {
+  // Use hardcoded plan directly - no API call needed
+  console.log("✓ Hardcoded plan detected, using it directly. Skipping architect API call.");
+  const maxAgents = Math.min(Math.max(parseInt($("#max-agents")?.value || 5), 2), 6);
+  const normalizedPlan = Utils.normalizePlan(demo.plan.plan, maxAgents);
+  const normalizedInputs = (demo.inputs || []).map(i => ({ ...i, id: Utils.uniqueId("input") }));
+  
+  setState({
+    plan: normalizedPlan,
+    suggestedInputs: normalizedInputs,
+    stage: "data"
+  });
+  // Auto-select inputs
+  setState({ selectedInputs: new Set(state.suggestedInputs.map(i => i.id)) });
+}
+
 async function runArchitect() {
   try {
-    const creds = await ensureCreds();
-    const demo = state.selectedDemoIndex === -1 ? state.customProblem : config.demos[state.selectedDemoIndex];
-    if (state.selectedDemoIndex === -2) { // saved agent re-run (shouldn't really happen here but safe guard)
-      // just go to data
+    // Get the demo object - try multiple sources
+    let demo = null;
+    if (state.selectedDemoIndex === -1) {
+      demo = state.customProblem;
+    } else if (state.selectedDemoIndex === -2) {
+      // saved agent re-run - just go to data
       setState({ stage: "data" });
+      return;
+    } else if (state.selectedDemoIndex >= 0) {
+      // Try stored demo first, then config
+      demo = state.selectedDemo || (config.demos && config.demos[state.selectedDemoIndex]);
+    }
+
+    if (!demo) {
+      setState({ error: "Demo not found. Index: " + state.selectedDemoIndex, stage: "idle" });
       return;
     }
 
+    // DOUBLE CHECK: If demo has a hardcoded plan, use it (backup safety check)
+    // The structure is: demo.plan.plan (nested plan object with plan array)
+    if (demo.plan && 
+        typeof demo.plan === 'object' && 
+        demo.plan.plan && 
+        Array.isArray(demo.plan.plan) && 
+        demo.plan.plan.length > 0) {
+      // Use hardcoded plan directly - no API call needed
+      console.log("✓ Hardcoded plan detected in runArchitect (backup check), using it directly.");
+      useHardcodedPlan(demo);
+      return; // CRITICAL: Early return - do not proceed to API call
+    }
+    
+    console.log("✗ No hardcoded plan found. Demo plan structure:", demo.plan);
+    console.log("Will call architect API with problem:", demo.problem || demo.body || "N/A");
+
+    // Otherwise, generate plan using architect
+    // Ensure we have a valid problem string - never null or undefined
+    const problemText = (demo.problem || demo.body || "Generate a plan for this workflow.").toString().trim();
+    if (!problemText || problemText.length === 0) {
+      setState({ error: "No problem description available for this demo.", stage: "idle" });
+      return;
+    }
+
+    const creds = await ensureCreds();
     const model = $("#model")?.value || "gpt-5-mini";
     const maxAgents = Math.min(Math.max(parseInt($("#max-agents")?.value || 5), 2), 6);
+
+    // Ensure system prompt is also never null
+    const systemPrompt = ($("#architect-prompt")?.value || "").toString().trim();
+    const systemContent = systemPrompt ? `${systemPrompt}\nLimit to <= ${maxAgents} agents.` : `Limit to <= ${maxAgents} agents.`;
 
     setState({ stage: "architect", plan: [], architectBuffer: "" });
     let buffer = "";
 
     await Utils.streamChatCompletion({
       llm: creds,
-      body: { model, stream: true, messages: [{ role: "system", content: `${$("#architect-prompt")?.value}\nLimit to <= ${maxAgents} agents.` }, { role: "user", content: demo.problem }] },
+      body: { 
+        model, 
+        stream: true, 
+        messages: [
+          { role: "system", content: systemContent }, 
+          { role: "user", content: problemText }
+        ] 
+      },
       onChunk: (text) => { buffer += text; setState({ architectBuffer: buffer }); }
     });
 
@@ -305,7 +414,9 @@ async function startAgents() {
   try {
     const creds = await ensureCreds();
     const model = $("#model")?.value || "gpt-5-mini";
-    const agentStyle = $("#agent-style")?.value || "";
+    const demo = state.selectedDemoIndex === -1 ? state.customProblem : (state.selectedDemoIndex === -2 ? state.customProblem : config.demos[state.selectedDemoIndex]);
+    // Use demo-specific agentStyle if available, otherwise use form value
+    const agentStyle = demo?.agentStyle || $("#agent-style")?.value || "";
     const inputBlob = Utils.formatDataEntries(entries);
 
     setState({ stage: "run", agentOutputs: [], error: "", runningNodeIds: new Set(), latestNodeId: null });
@@ -330,7 +441,7 @@ async function startAgents() {
             body: {
               model, stream: true, messages: [
                 { role: "system", content: `${out.instruction}\n${agentStyle}\nOutput Markdown. Keep response under 150 words.` },
-                { role: "user", content: `Problem:\n${(state.selectedDemoIndex >= 0 ? config.demos[state.selectedDemoIndex].problem : state.customProblem?.problem || "Problem")}\n\nTask:\n${out.task}\n\nInput:\n${inputBlob}\n\nContext:\n${Utils.truncate(context, 1200)}` }
+                { role: "user", content: `Problem:\n${(state.selectedDemoIndex >= 0 ? (config.demos[state.selectedDemoIndex]?.problem || config.demos[state.selectedDemoIndex]?.body || "Workflow task") : (state.customProblem?.problem || "Problem"))}\n\nTask:\n${out.task}\n\nInput:\n${inputBlob}\n\nContext:\n${Utils.truncate(context, 1200)}` }
               ]
             },
             onChunk: (t) => { buffer += t; updateAgent(out.id, buffer, "running"); }

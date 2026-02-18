@@ -152,6 +152,57 @@
           "content": "Doc KB-442: EU connector patch adds TLS 1.3. Rollback requires feature flag CONNECTOR_EU_13 disabled + restart."
         }
       ]
+    },
+    {
+      "id": "grant-to-growth-predictor",
+      "icon": "bi bi-graph-up-arrow",
+      "title": "Grant-to-Growth Predictor",
+      "body": "Align new NIH/NSF grant awards with historical SAP data to proactively support researchers with imaging reagents and service plans.",
+      "agentStyle": "You are a Revvity Scientific Consultant, not a salesperson. Your role is to provide scientific enablement and accelerate discovery through mutually beneficial growth. Use these keywords naturally in your output: 'Scientific Enablement,' 'Accelerating Discovery,' 'Mutually Beneficial Growth,' and 'Protocol Optimization.' When analyzing data: If Grant_Amount is high but Reagent_Spend is low, you must flag this as a 'High Priority Scientific Support Opportunity.' Answer in <=50 words using crisp markdown bullets.",
+      "plan": {
+        "plan": [
+          {
+            "agentName": "GrantScout",
+            "systemInstruction": "Identify new NIH/NSF awards in the Northeast (MA, NY, CT, PA, NJ) related to 'Oncology' or 'In Vivo Imaging'.",
+            "initialTask": "Extract PI name, Institution, Grant Amount, and Research Focus from the 'Public_Grant_Feed'.",
+            "stage": 1,
+            "next": ["BudgetAuditor"]
+          },
+          {
+            "agentName": "BudgetAuditor",
+            "systemInstruction": "Cross-reference grant size with Revvity internal spend benchmarks. (Benchmark: Imaging projects typically require 10% of grant total for consumables).",
+            "initialTask": "Compare extracted grant amount with 'Mocked_SAP_Data' for that PI. Identify the budget gap.",
+            "stage": 2,
+            "next": ["ApplicationMatcher"]
+          },
+          {
+            "agentName": "ApplicationMatcher",
+            "systemInstruction": "Match research keywords to Revvity In Vivo probes (e.g., RediJect, VivoTag) and imaging protocols.",
+            "initialTask": "Recommend 3 specific imaging probes based on the research focus identified by GrantScout.",
+            "stage": 3,
+            "next": ["ProposalBuilder"]
+          },
+          {
+            "agentName": "ProposalBuilder",
+            "systemInstruction": "Draft a 'Growth Mindset' partnership email. Tone: Collaborative, scientific, and supportive. Emphasize maximizing research impact.",
+            "initialTask": "Generate an email for Chris to send to the PI, offering a 'Scientific Wellness Check' and a customized reagent package.",
+            "stage": 4,
+            "next": []
+          }
+        ]
+      },
+      "inputs": [
+        {
+          "title": "Public_Grant_Feed",
+          "type": "text",
+          "content": "ID: R01-CA23456 | PI: Dr. Sarah Chen | Inst: Boston University | Amount: $650,000 | Title: Monitoring T-Cell Exhaustion in Lung Adenocarcinoma using Bioluminescence."
+        },
+        {
+          "title": "Mocked_SAP_Data",
+          "type": "text",
+          "content": "PI_Name: Dr. Sarah Chen | Last_Purchase: 2023-05 | System: IVIS Spectrum | Reagent_Spend_YTD: $450 | Service_Contract: Expired."
+        }
+      ]
     }
   ]
 }

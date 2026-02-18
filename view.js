@@ -98,7 +98,7 @@ export function renderApp(container, state, config, actions) {
   render(html`
       ${state.error ? html`<div class="alert alert-danger">${state.error}</div>` : null}
       <section class="card mb-4">
-        <div class="card-body"><h3 class="h4 mb-2">${demo.title}</h3><p class="mb-0 text-body-secondary small">${demo.problem}</p></div>
+        <div class="card-body"><h3 class="h4 mb-2">${demo.title}</h3>${demo.problem ? html`<p class="mb-0 text-body-secondary small">${demo.problem}</p>` : html`<p class="mb-0 text-body-secondary small">${demo.body || ""}</p>`}</div>
       </section>
       ${renderStageBadges(state)}
       ${renderPlan(state, actions)}
