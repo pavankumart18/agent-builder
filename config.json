@@ -203,6 +203,89 @@
           "content": "PI_Name: Dr. Sarah Chen | Last_Purchase: 2023-05 | System: IVIS Spectrum | Reagent_Spend_YTD: $450 | Service_Contract: Expired."
         }
       ]
+    },
+    {
+      "id": "converged-adtech-ops",
+      "icon": "bi bi-broadcast-pin",
+      "title": "Converged AdTech Operations Suite",
+      "body": "Bridge legacy linear TV and digital streaming into a single monetization engine. Autonomously resolve audiences, optimize yield, enforce compliance, manage in-flight delivery, and prove incremental lift across the converged ecosystem.",
+      "agentStyle": "You are a Lead Convergence Strategist for a major media conglomerate, not a media seller. Your role is to unify linear and digital operations into a single, liquid marketplace. Use these keywords naturally in your output: 'Unified Monetization,' 'Converged Reach,' 'Audience Liquidity,' 'Deterministic Attribution,' and 'Make-Good Fulfillment.' When analyzing data: If Linear_Delivery is below guaranteed GRPs but Digital_Capacity is available, flag this as a 'Real-Time Make-Good Trigger Event.' Answer in <=50 words using crisp markdown bullets.",
+      "plan": {
+        "plan": [
+          {
+            "agentName": "IdentitySpecialist",
+            "systemInstruction": "Access the unified audience graph to resolve 1B+ unique device IDs across linear set-top-box footprints and digital CTV/mobile endpoints. Identify high-intent segments by fusing deterministic viewership data with purchase-intent signals.",
+            "initialTask": "Resolve the 'Luxury Travelers' segment from 'Unified_Audience_Graph'. Extract matched device count, linear household overlap, digital reach extension, and confidence score.",
+            "stage": 1,
+            "next": ["YieldSpecialist"]
+          },
+          {
+            "agentName": "YieldSpecialist",
+            "systemInstruction": "Analyze real-time linear inventory capacity (avails, sellout rates, scatter pricing) alongside digital programmatic demand signals (bid density, floor prices, frequency caps). Generate a converged proposal that treats TV spots and digital impressions as a single liquid asset to maximize total unduplicated reach.",
+            "initialTask": "Using the segment from IdentitySpecialist and current 'Inventory_Capacity_Feed', generate a converged media proposal balancing 60% linear / 40% digital allocation. Output CPM-equivalent pricing, projected unduplicated reach, and optimal daypart mix.",
+            "stage": 2,
+            "next": ["ComplianceSpecialist"]
+          },
+          {
+            "agentName": "ComplianceSpecialist",
+            "systemInstruction": "Act as a global regulatory guardrail. Scan the proposed ad creative and converged media plan against international broadcast laws, advertising standards, and data privacy regulations across 220 markets. Cross-reference each market entry in 'Global_Compliance_Ruleset' against the creative flags in 'Ad_Creative_Manifest'. Identify violations by severity (Critical, Major, Minor), auto-generate corrective actions, and produce a market-level clearance matrix without halting the campaign workflow.",
+            "initialTask": "Scan the converged proposal from YieldSpecialist and the creative asset metadata in 'Ad_Creative_Manifest' against 'Global_Compliance_Ruleset'. For each target market, output a clearance status (Cleared, Conditional, Blocked), list specific violated rules with regulation codes, and generate corrective actions (e.g., creative swap, daypart restriction, disclaimer overlay, segment suppression).",
+            "stage": 3,
+            "next": ["InFlightOpsSpecialist"]
+          },
+          {
+            "agentName": "InFlightOpsSpecialist",
+            "systemInstruction": "Monitor live broadcast signals and real-time audience delivery against guaranteed GRP/impression thresholds. If a live event or scheduled linear placement under-delivers its contracted audience, autonomously trigger compensatory digital impressions to fulfill the reach guarantee before the campaign flight closes.",
+            "initialTask": "Ingest 'Live_Broadcast_Signal' data. Compare actual linear delivery against the guaranteed metrics in the compliance-cleared plan. If under-delivery exceeds 5% threshold, calculate the digital impression deficit and generate a 'Make-Good' order routed to the programmatic exchange targeting the same 'Luxury Travelers' segment.",
+            "stage": 4,
+            "next": ["MeasurementSpecialist"]
+          },
+          {
+            "agentName": "MeasurementSpecialist",
+            "systemInstruction": "Operate within a secure clean-room environment. Match anonymized viewing logs from both linear and digital delivery against brand sales and conversion data. Produce a deterministic, deduplicated attribution report proving incremental purchase lift driven by the converged campaign.",
+            "initialTask": "Join 'Converged_Delivery_Log' with 'Brand_Sales_Data' inside the clean room. Generate a final attribution report showing: total unduplicated converged reach, frequency distribution, exposed-vs-control purchase lift, ROAS by channel (linear vs. digital vs. make-good), and a unified campaign health score.",
+            "stage": 5,
+            "next": []
+          }
+        ]
+      },
+      "inputs": [
+        {
+          "title": "Unified_Audience_Graph",
+          "type": "text",
+          "content": "Segment: Luxury Travelers | Graph_Version: v4.2.1 | Total_Resolved_IDs: 1,247,893,401 | Segment_Match: 18,432,500 devices | Linear_HH_Overlap: 6,210,000 households | Digital_CTV_Reach: 9,870,000 devices | Mobile_Extension: 14,320,000 devices | Confidence_Score: 0.91 | Signal_Sources: STB_Viewership, App_Usage, Travel_Booking_Intent, Affluence_Index_Top15pct."
+        },
+        {
+          "title": "Inventory_Capacity_Feed",
+          "type": "text",
+          "content": "Date: 2025-Q3 | Linear_Avails: 14,200 units (Prime: 62% sold, Daytime: 41% sold, Late: 38% sold) | Scatter_CPM: $48.20 | Digital_CTV_Avails: 892M impressions | Programmatic_Floor_CPM: $22.50 | Avg_Bid_Density: 4.7x | Frequency_Cap_Recommended: 4x/week | Peak_Demand_Dayparts: M-F 8PM-10PM, Su Sports."
+        },
+        {
+          "title": "Ad_Creative_Manifest",
+          "type": "text",
+          "content": "Creative_ID: LUX-TV-0042 | Brand: Meridian Hotels & Resorts | Format: :30s TV + :15s CTV + :06s Bumper + 300x250 Display + Native In-Feed | Content_Flags: Alcohol_Visible (champagne in scene, 2.4s screen time), Minor_Absent, Gambling_Absent, Tobacco_Absent, Firearms_Absent, Political_Content_Absent, Health_Claims_Absent | Nudity_Rating: None | Violence_Rating: None | Flash_Frequency: Compliant (<3Hz) | Audio_Peak: -14 LUFS | Accessibility: Closed_Captions_EN/ES/FR, Audio_Description_EN | Languages: EN, ES, FR, DE, JA, AR, ZH | Target_Markets: US, UK, FR, DE, JP, AU, UAE, SG, BR, KR, IN, SA | GARM_Category: Floor_Suitable | IAB_Category: Travel_Tourism | Advertiser_Tier: Premium_Verified."
+        },
+        {
+          "title": "Global_Compliance_Ruleset",
+          "type": "text",
+          "content": "Total_Markets: 220 | Scan_Version: 2025-Q3-R7 | Rule_Count: 4,812 | MARKET: US | Regulator: FCC/FTC | Rules: COPPA_child_segment_block (under-13 suppression required), FTC_endorsement_disclosure, CCPA/CPRA_opt-out_signal_honor, Political_ad_disclaimer_if_applicable, Loudness: ATSC_A85 (-24 LKFS +/-2) | Status_for_LUX-TV-0042: CLEARED. || MARKET: UK | Regulator: Ofcom/ASA | Rules: Alcohol_watershed_post-2100_only (Ofcom_Rule_1.10), HFSS_ban_under16_audience_>25%, BCAP_Code_Section_19_Alcohol (no appeal to under-18s, no link to social success), CAP_Code_Influencer_Disclosure, UK_GDPR_consent_required, Loudness: EBU_R128 (-23 LUFS +/-1) | Status_for_LUX-TV-0042: CONDITIONAL — Alcohol_visible triggers watershed restriction; restrict linear to post-21:00 GMT dayparts; digital requires age-gate verification on CTV/mobile. || MARKET: FR | Regulator: ARCOM/ARPP | Rules: Loi_Evin_alcohol_advertising (no lifestyle association, mandatory health warning 'L'abus d'alcool est dangereux pour la santé'), French_language_mandate (Loi_Toubon — all on-screen text must include French translation), RGPD_consent_CMP_required, CNILguidelines_cookie_consent | Status_for_LUX-TV-0042: CONDITIONAL — Loi_Evin requires health disclaimer overlay on all alcohol-visible frames; Loi_Toubon requires FR subtitle/text overlay on all EN/ES/DE/JA creatives; lifestyle imagery of champagne may violate Loi_Evin lifestyle-association clause — flag for legal review. || MARKET: DE | Regulator: ZAW/Landesmedienanstalten | Rules: JuSchG_youth_protection (no alcohol ads in youth-adjacent programming), Rundfunkstaatsvertrag_ad_separation, TMG_imprint_requirement, DSGVO_consent_required, Loudness: EBU_R128 | Status_for_LUX-TV-0042: CONDITIONAL — Alcohol content requires exclusion from programs with >20% under-18 audience share; imprint/Impressum link required on all digital placements. || MARKET: JP | Regulator: JARO/BPO | Rules: Pharmaceutical_Affairs_Act, Alcohol_voluntary_code (no ads before 18:00 JST), Act_on_Specified_Commercial_Transactions_disclosure, APPI_personal_data_consent, JARO_taste_decency_review | Status_for_LUX-TV-0042: CONDITIONAL — Alcohol voluntary code restricts linear to post-18:00 JST; all digital requires APPI consent flow; Japanese-language disclaimer required. || MARKET: UAE | Regulator: NMC (National Media Council) | Rules: Federal_Law_No15_2020_media_content, Alcohol_advertising_PROHIBITED (total ban — no exceptions for any channel or daypart), Islamic_values_compliance, Arabic_language_requirement_for_all_ad_text, Data_residency: UAE_PDPL_local_storage_required | Status_for_LUX-TV-0042: BLOCKED — Alcohol_visible content is strictly prohibited; creative must be swapped to alcohol-free variant (LUX-TV-0042-AF) or market must be excluded from plan. || MARKET: SG | Regulator: IMDA/ASAS | Rules: Singapore_Code_of_Advertising_Practice, Alcohol_Liquor_Control_Act (no ads on public transport or within 200m of schools), PDPA_consent_required, Racial_Harmony_Act_sensitivity_check | Status_for_LUX-TV-0042: CONDITIONAL — Alcohol content permitted but restricted from OOH/transit digital extensions; PDPA consent required; verify no placement near school-zone geo-fences. || MARKET: BR | Regulator: CONAR/ANVISA | Rules: CONAR_Code_alcohol_restrictions (no association with sports success or sexual appeal), ANVISA_health_warning_mandatory ('Beba com moderação'), LGPD_data_consent_required, Portuguese_language_mandatory | Status_for_LUX-TV-0042: CONDITIONAL — ANVISA health warning overlay required; Portuguese translation mandatory; verify champagne scene does not imply social/sexual success per CONAR guidelines. || MARKET: KR | Regulator: KFTC/KCSC | Rules: National_Health_Promotion_Act_alcohol (warning text mandatory, no ads targeting minors), PIPA_data_consent, Korean_language_requirement, Broadcasting_Act_ad_caps | Status_for_LUX-TV-0042: CONDITIONAL — Mandatory alcohol health warning in Korean; restrict from minor-skewing programs; PIPA consent flow required on digital. || MARKET: IN | Regulator: ASCI/MIB | Rules: Cable_TV_Network_Rules_alcohol_surrogate_only (direct alcohol ads PROHIBITED on broadcast — surrogate/brand-extension ads only), ASCI_Code_Chapter_IV, IT_Act_2000_digital_consent, DPDP_Act_2023_data_protection | Status_for_LUX-TV-0042: BLOCKED_LINEAR / CONDITIONAL_DIGITAL — Direct alcohol creative blocked on Indian linear broadcast; digital permitted with age-gating and DPDP consent; surrogate creative variant (LUX-TV-0042-SG) required for linear. || MARKET: SA | Regulator: GCAM (General Commission for Audiovisual Media) | Rules: Alcohol_advertising_PROHIBITED (total ban, stricter than UAE — includes digital), Islamic_Sharia_compliance_review, Arabic_mandatory, Saudi_PDPL_data_residency | Status_for_LUX-TV-0042: BLOCKED — Alcohol content prohibited across ALL channels including digital; market must be served with alcohol-free creative variant (LUX-TV-0042-AF) or fully excluded. || SUMMARY: Markets_Cleared: 1 (US) | Markets_Conditional: 8 (UK, FR, DE, JP, SG, BR, KR, IN-Digital) | Markets_Blocked: 3 (UAE, SA, IN-Linear) | Critical_Actions_Required: 3 (creative swap for UAE/SA/IN-Linear) | Major_Actions_Required: 11 (watershed/daypart restrictions, health disclaimers, language overlays, age-gates) | Minor_Actions_Required: 6 (consent flows, imprint links, geo-fence checks)."
+        },
+        {
+          "title": "Live_Broadcast_Signal",
+          "type": "text",
+          "content": "Event: UEFA Champions League Semi-Final | Network: Linear Channel 5 | Scheduled_Start: 2025-07-15T19:00Z | Guaranteed_GRPs: 8.4 (A25-54) | Actual_Delivery_GRPs: 6.1 (A25-54) | Under_Delivery_Pct: 27.4% | Cause: Match_Delayed_45min, Audience_Erosion | Digital_Backfill_Capacity: Available_220M_impressions | Segment_Overlap_Available: Luxury_Travelers_CTV_Active."
+        },
+        {
+          "title": "Converged_Delivery_Log",
+          "type": "text",
+          "content": "Campaign: Meridian_Q3_Converged | Flight: 2025-07-01 to 2025-09-30 | Linear_Impressions_Delivered: 48,320,000 | Digital_CTV_Impressions: 127,450,000 | Digital_Mobile_Impressions: 84,210,000 | Make-Good_Impressions_Triggered: 18,600,000 | Total_Unduplicated_Reach: 22,140,000 unique | Avg_Frequency: 4.2x | Segment_Match_Rate: 87.3% | Viewability_Rate: 91.2% (digital) | Completion_Rate: 78.4% (:30s CTV)."
+        },
+        {
+          "title": "Brand_Sales_Data",
+          "type": "text",
+          "content": "Brand: Meridian Hotels & Resorts | Period: 2025-Q3 | Bookings_Exposed_Group: 14,892 | Bookings_Control_Group: 9,107 | Avg_Booking_Value_Exposed: $2,340 | Avg_Booking_Value_Control: $2,180 | Loyalty_Signups_Exposed: 3,420 | Loyalty_Signups_Control: 1,890 | Attribution_Window: 30_days_post_exposure | Match_Rate: 78.3% | Incremental_Revenue_Attributed: $4,280,000 | Cost_Per_Incremental_Booking: $18.40."
+        }
+      ]
     }
   ]
 }
